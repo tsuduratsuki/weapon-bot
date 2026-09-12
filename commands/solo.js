@@ -1,5 +1,3 @@
-const fetch = require("node-fetch");
-
 module.exports = {
   name: "solo",
   description: "ソロ武器抽選を開始します",
@@ -10,7 +8,7 @@ module.exports = {
     // GAS の武器一覧 API
     const url = "https://script.google.com/macros/s/AKfycbxxxxxxxxxxxxxxxxxxxx/exec";
 
-    // 武器一覧を取得
+    // 武器一覧を取得（標準fetch）
     const res = await fetch(url);
     const weapons = await res.json();
 
