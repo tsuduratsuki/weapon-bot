@@ -1,5 +1,5 @@
 require("dotenv").config();
-
+const fetch = require("node-fetch");
 const { Client, GatewayIntentBits, ActionRowBuilder, StringSelectMenuBuilder } = require("discord.js");
 const client = new Client({
   intents: [
