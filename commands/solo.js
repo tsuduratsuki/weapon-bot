@@ -69,10 +69,7 @@ module.exports = {
             { name: "武器名", value: result.type, inline: true },
             { name: "武器種", value: result.sub, inline: true },
             { name: "射程（数値）", value: String(result.special), inline: true },
-            { name: "射程判定", value: result.rangeJudge ?? "不明", inline: true },
-            { name: "チャージャーF", value: String(result.chargerFlag), inline: true },
-            { name: "サブウェポン", value: result.subWeapon ?? "不明", inline: true },
-            { name: "スペシャルウェポン", value: result.specialWeapon ?? "不明", inline: true }
+            { name: "ID", value: String(result.name), inline: true }
           ]
         }
       ]
