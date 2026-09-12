@@ -1,7 +1,6 @@
 const { SlashCommandBuilder } = require("discord.js");
 const { getWeaponsCached } = require("../utils/getWeaponsCached");
 
-// 武器種・サブ・スペシャルの一覧（あなたのデータに合わせて調整可能）
 const TYPE_CHOICES = [
   { name: "シューター", value: "シューター" },
   { name: "ブラスター", value: "ブラスター" },
@@ -44,14 +43,12 @@ module.exports = {
     .setName("solo")
     .setDescription("ソロ武器抽選を開始します")
 
-    // normal
     .addSubcommand(sub =>
       sub
         .setName("normal")
         .setDescription("完全ランダムで抽選します")
     )
 
-    // type
     .addSubcommand(sub =>
       sub
         .setName("type")
@@ -65,7 +62,6 @@ module.exports = {
         )
     )
 
-    // sub
     .addSubcommand(sub =>
       sub
         .setName("sub")
@@ -79,7 +75,6 @@ module.exports = {
         )
     )
 
-    // special
     .addSubcommand(sub =>
       sub
         .setName("special")
@@ -97,14 +92,12 @@ module.exports = {
     const sub = interaction.options.getSubcommand();
     const filter = interaction.options.getString("filter");
 
-    await interaction.deferReply();
-
+    // ★ deferReply は絶対に使わない（index.js と衝突するため）
     const weapons = await getWeaponsCached();
-  console.log(weapons[0]);
+    console.log(weapons[0]); // ← データ確認用（あとで消してOK）
 
-    // ★ weapons が空なら止まるので必ずチェック
     if (!weapons || weapons.length === 0) {
-      return interaction.editReply("武器データが取得できませんでした。しばらくしてからもう一度試してください。");
+      return interaction.reply("武器データが取得できませんでした。");
     }
 
     let filtered = weapons;
@@ -117,17 +110,13 @@ module.exports = {
       filtered = weapons.filter(w => w.special === filter);
     }
 
-    // ★ normal はそのまま（filtered = weapons）
-
-    // ★ filtered が 0 件なら止まらないようにする
     if (filtered.length === 0) {
-      return interaction.editReply("該当する武器がありませんでした。");
+      return interaction.reply("該当する武器がありませんでした。");
     }
 
-    const index = Math.floor(Math.random() * filtered.length);
-    const result = filtered[index];
+    const result = filtered[Math.floor(Math.random() * filtered.length)];
 
-    await interaction.editReply({
+    return interaction.reply({
       embeds: [
         {
           title: "🎯 ソロ武器抽選結果",
