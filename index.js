@@ -1,6 +1,7 @@
-require("dotenv").config();
-const fetch = require("node-fetch");
+const fs = require("fs");
+const path = require("path");
 const { Client, GatewayIntentBits, ActionRowBuilder, StringSelectMenuBuilder } = require("discord.js");
+
 const client = new Client({
   intents: [
     GatewayIntentBits.Guilds,
@@ -9,13 +10,28 @@ const client = new Client({
   ]
 });
 
-client.once("clientReady", () => {
+client.once("ready", () => {
   console.log("Botがオンラインになりました！");
 });
 
 // ---------------------------
-// GASデータ取得 + キャッシュ
+// スラッシュコマンド読み込み
 // ---------------------------
+client.commands = new Map();
+const commandsPath = path.join(__dirname, "commands");
+const commandFiles = fs.readdirSync(commandsPath).filter(file => file.endsWith(".js"));
+
+for (const file of commandFiles) {
+  const filePath = path.join(commandsPath, file);
+  const command = require(filePath);
+  client.commands.set(command.data.name, command);
+}
+
+// ---------------------------
+// ここから下はあなたの既存コード
+// ---------------------------
+
+// GASデータ取得 + キャッシュ
 let cachedWeapons = null;
 let lastFetchTime = 0;
 
@@ -36,9 +52,6 @@ async function getWeaponsCached() {
   return data;
 }
 
-// ---------------------------
-// 設定の保存場所（必須）
-// ---------------------------
 let team4Settings = {
   mode: null,
   charger: null,
@@ -51,11 +64,7 @@ let team8Settings = {
   range: null
 };
 
-// ---------------------------
-// メッセージコマンド
-// ---------------------------
-
-// 1人用
+// メッセージコマンド（!solo など）
 client.on("messageCreate", async message => {
   if (message.content === "!solo") {
     const selectMenu = new StringSelectMenuBuilder()
@@ -73,101 +82,26 @@ client.on("messageCreate", async message => {
   }
 });
 
-function pickWithLimit(list, count, chargerLimit, rangeLimit) {
-  let pool = [...list]; // コピーして使う
-  let result = [];
-  let chargerCount = 0;
-  let rangeCount = 0;
-
-  while (result.length < count && pool.length > 0) {
-    const index = Math.floor(Math.random() * pool.length);
-    const pick = pool[index];
-
-    if (chargerLimit === "on" && pick.charger === 1 && chargerCount >= 1) {
-      pool.splice(index, 1);
-      continue;
-    }
-
-    if (rangeLimit === "on" && pick.range === "長" && rangeCount >= 2) {
-      pool.splice(index, 1);
-      continue;
-    }
-
-    result.push(pick);
-    pool.splice(index, 1);
-
-    if (pick.charger === 1) chargerCount++;
-    if (pick.range === "長") rangeCount++;
-  }
-
-  return result;
-}
-
 // ---------------------------
-// 4人用
-// ---------------------------
-client.on("messageCreate", async message => {
-  if (message.content === "!team4") {
-
-    // 初期化
-    team4Settings.mode = null;
-    team4Settings.charger = null;
-    team4Settings.range = null;
-
-    const modeMenu = new StringSelectMenuBuilder()
-      .setCustomId("team4Mode")
-      .setPlaceholder("抽選方法を選んでください")
-      .addOptions([
-        { label: "通常抽選", value: "normal" },
-        { label: "武器種で抽選", value: "type" },
-        { label: "サブで抽選", value: "sub" },
-        { label: "スペシャルで抽選", value: "special" }
-      ]);
-
-    const row1 = new ActionRowBuilder().addComponents(modeMenu);
-
-    await message.reply({
-      content: "抽選方法を選んでください：",
-      components: [row1]
-    });
-  }
-});
-
-// ---------------------------
-// 8人用
-// ---------------------------
-client.on("messageCreate", async message => {
-  if (message.content === "!team8") {
-
-    // 初期化
-    team8Settings.mode = null;
-    team8Settings.charger = null;
-    team8Settings.range = null;
-
-    const modeMenu = new StringSelectMenuBuilder()
-      .setCustomId("team8Mode")
-      .setPlaceholder("抽選方法を選んでください")
-      .addOptions([
-        { label: "通常抽選", value: "normal" },
-        { label: "武器種で抽選", value: "type" },
-        { label: "サブで抽選", value: "sub" },
-        { label: "スペシャルで抽選", value: "special" }
-      ]);
-
-    const row1 = new ActionRowBuilder().addComponents(modeMenu);
-
-    await message.reply({
-      content: "抽選方法を選んでください：",
-      components: [row1]
-    });
-  }
-});
-
-// ---------------------------
-// interactionCreate
+// interactionCreate（1つに統合）
 // ---------------------------
 client.on("interactionCreate", async interaction => {
 
+  // スラッシュコマンド
+  if (interaction.isChatInputCommand()) {
+    const command = client.commands.get(interaction.commandName);
+    if (!command) return;
+
+    try {
+      await command.execute(interaction);
+    } catch (error) {
+      console.error(error);
+      await interaction.reply({ content: "コマンド実行中にエラーが発生しました。", ephemeral: true });
+    }
+    return;
+  }
+
+  // ここから下はあなたの既存のメニュー処理
   if (!interaction.isStringSelectMenu()) return;
 
   // 抽選方法を選んだ瞬間に武器一覧を読み込む（高速化の要）
