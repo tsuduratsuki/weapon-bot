@@ -4,34 +4,42 @@ module.exports = {
   data: new SlashCommandBuilder()
     .setName("solo")
     .setDescription("ソロ武器抽選を開始します")
+
+    // ⭐ 抽選方法（分かりやすい名前に変更）
     .addStringOption(option =>
       option
         .setName("mode")
         .setDescription("抽選方法を選んでください")
         .setRequired(true)
         .addChoices(
-          { name: "通常（完全ランダム）", value: "normal" },
-          { name: "武器種限定", value: "type" },
-          { name: "サブ限定", value: "sub" },
-          { name: "スペシャル限定", value: "special" }
+          { name: "完全ランダム", value: "normal" },
+          { name: "武器種を選んで抽選", value: "type" },
+          { name: "サブを選んで抽選", value: "sub" },
+          { name: "スペシャルを選んで抽選", value: "special" }
         )
     )
+
+    // ⭐ 武器種一覧（名前を分かりやすく）
     .addStringOption(option =>
       option
-        .setName("filter_type")
-        .setDescription("武器種を選択（武器種限定の場合）")
+        .setName("weapon_type")
+        .setDescription("武器種一覧（武器種を選んで抽選の場合）")
         .setRequired(false)
     )
+
+    // ⭐ サブ一覧
     .addStringOption(option =>
       option
-        .setName("filter_sub")
-        .setDescription("サブを選択（サブ限定の場合）")
+        .setName("weapon_sub")
+        .setDescription("サブ一覧（サブを選んで抽選の場合）")
         .setRequired(false)
     )
+
+    // ⭐ スペシャル一覧
     .addStringOption(option =>
       option
-        .setName("filter_special")
-        .setDescription("スペシャルを選択（スペシャル限定の場合）")
+        .setName("weapon_special")
+        .setDescription("スペシャル一覧（スペシャルを選んで抽選の場合）")
         .setRequired(false)
     ),
 
@@ -42,17 +50,17 @@ module.exports = {
     let filter = null;
 
     if (mode === "type") {
-      filter = interaction.options.getString("filter_type");
+      filter = interaction.options.getString("weapon_type");
     } else if (mode === "sub") {
-      filter = interaction.options.getString("filter_sub");
+      filter = interaction.options.getString("weapon_sub");
     } else if (mode === "special") {
-      filter = interaction.options.getString("filter_special");
+      filter = interaction.options.getString("weapon_special");
     }
 
     // ⭐ フィルターが必要なのに選ばれていない場合
     if (mode !== "normal" && !filter) {
       return interaction.reply({
-        content: "フィルターを選んでください。",
+        content: "一覧から選んでください。",
         ephemeral: true
       });
     }
