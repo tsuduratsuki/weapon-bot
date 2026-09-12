@@ -14,7 +14,7 @@ module.exports = {
     await interaction.deferReply();
 
     // GAS API
-    const url = "https://script.google.com/macros/s/AKfycbwReLt9RQ98jXaUFPFbtOt5dbpq6zgmTeMnEa4xQnFbR57G1xJDvcYmUh45tvq4VO-m/exec";
+    const url = "https://script.google.com/macros/s/AKfycbwu-ojVqeVHhjJ0Uq1UYQ0RtnZuCGWa8UmBW6j2g1AxWJn-M69t7aDR5DewFOnpm-xI/exec";
     const res = await fetch(url);
     const weapons = await res.json();
 
