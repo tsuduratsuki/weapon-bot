@@ -18,16 +18,38 @@ module.exports = {
     )
     .addStringOption(option =>
       option
-        .setName("filter")
-        .setDescription("武器種・サブ・スペシャルを選択（限定抽選の場合）")
+        .setName("filter_type")
+        .setDescription("武器種を選択（武器種限定の場合）")
+        .setRequired(false)
+    )
+    .addStringOption(option =>
+      option
+        .setName("filter_sub")
+        .setDescription("サブを選択（サブ限定の場合）")
+        .setRequired(false)
+    )
+    .addStringOption(option =>
+      option
+        .setName("filter_special")
+        .setDescription("スペシャルを選択（スペシャル限定の場合）")
         .setRequired(false)
     ),
 
   async execute(interaction) {
     const mode = interaction.options.getString("mode");
-    const filter = interaction.options.getString("filter");
 
-    // ⭐ フィルターがまだ選ばれていない場合は返事しない
+    // ⭐ mode に応じて使うフィルターを切り替える
+    let filter = null;
+
+    if (mode === "type") {
+      filter = interaction.options.getString("filter_type");
+    } else if (mode === "sub") {
+      filter = interaction.options.getString("filter_sub");
+    } else if (mode === "special") {
+      filter = interaction.options.getString("filter_special");
+    }
+
+    // ⭐ フィルターが必要なのに選ばれていない場合
     if (mode !== "normal" && !filter) {
       return interaction.reply({
         content: "フィルターを選んでください。",
@@ -35,7 +57,6 @@ module.exports = {
       });
     }
 
-    // ⭐ 抽選実行（ここで初めて deferReply）
     await interaction.deferReply();
 
     const url = "https://script.google.com/macros/s/AKfycbwReLt9RQ98jXaUFPFbtOt5dbpq6zgmTeMnEa4xQnFbR57G1xJDvcYmUh45tvq4VO-m/exec";
