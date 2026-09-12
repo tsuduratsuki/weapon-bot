@@ -4,66 +4,48 @@ module.exports = {
   data: new SlashCommandBuilder()
     .setName("solo")
     .setDescription("ソロ武器抽選を開始します")
-
-    // ⭐ 抽選方法（分かりやすい名前に変更）
-    .addStringOption(option =>
-      option
-        .setName("mode")
-        .setDescription("抽選方法を選んでください")
-        .setRequired(true)
-        .addChoices(
-          { name: "完全ランダム", value: "normal" },
-          { name: "武器種を選んで抽選", value: "type" },
-          { name: "サブを選んで抽選", value: "sub" },
-          { name: "スペシャルを選んで抽選", value: "special" }
+    .addSubcommand(sub =>
+      sub
+        .setName("normal")
+        .setDescription("完全ランダムで抽選します")
+    )
+    .addSubcommand(sub =>
+      sub
+        .setName("type")
+        .setDescription("武器種を選んで抽選します")
+        .addStringOption(option =>
+          option
+            .setName("filter")
+            .setDescription("武器種を選択")
+            .setRequired(true)
         )
     )
-
-    // ⭐ 武器種一覧（名前を分かりやすく）
-    .addStringOption(option =>
-      option
-        .setName("weapon_type")
-        .setDescription("武器種一覧（武器種を選んで抽選の場合）")
-        .setRequired(false)
+    .addSubcommand(sub =>
+      sub
+        .setName("sub")
+        .setDescription("サブを選んで抽選します")
+        .addStringOption(option =>
+          option
+            .setName("filter")
+            .setDescription("サブを選択")
+            .setRequired(true)
+        )
     )
-
-    // ⭐ サブ一覧
-    .addStringOption(option =>
-      option
-        .setName("weapon_sub")
-        .setDescription("サブ一覧（サブを選んで抽選の場合）")
-        .setRequired(false)
-    )
-
-    // ⭐ スペシャル一覧
-    .addStringOption(option =>
-      option
-        .setName("weapon_special")
-        .setDescription("スペシャル一覧（スペシャルを選んで抽選の場合）")
-        .setRequired(false)
+    .addSubcommand(sub =>
+      sub
+        .setName("special")
+        .setDescription("スペシャルを選んで抽選します")
+        .addStringOption(option =>
+          option
+            .setName("filter")
+            .setDescription("スペシャルを選択")
+            .setRequired(true)
+        )
     ),
 
   async execute(interaction) {
-    const mode = interaction.options.getString("mode");
-
-    // ⭐ mode に応じて使うフィルターを切り替える
-    let filter = null;
-
-    if (mode === "type") {
-      filter = interaction.options.getString("weapon_type");
-    } else if (mode === "sub") {
-      filter = interaction.options.getString("weapon_sub");
-    } else if (mode === "special") {
-      filter = interaction.options.getString("weapon_special");
-    }
-
-    // ⭐ フィルターが必要なのに選ばれていない場合
-    if (mode !== "normal" && !filter) {
-      return interaction.reply({
-        content: "一覧から選んでください。",
-        ephemeral: true
-      });
-    }
+    const sub = interaction.options.getSubcommand();
+    const filter = interaction.options.getString("filter");
 
     await interaction.deferReply();
 
@@ -73,11 +55,11 @@ module.exports = {
 
     let filtered = weapons;
 
-    if (mode === "type") {
+    if (sub === "type") {
       filtered = weapons.filter(w => w.type === filter);
-    } else if (mode === "sub") {
+    } else if (sub === "sub") {
       filtered = weapons.filter(w => w.sub === filter);
-    } else if (mode === "special") {
+    } else if (sub === "special") {
       filtered = weapons.filter(w => w.special === filter);
     }
 
