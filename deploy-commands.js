@@ -2,7 +2,7 @@ require("dotenv").config();
 const { REST, Routes, SlashCommandBuilder } = require("discord.js");
 
 // ★ あなたの GAS API URL を入れてね
-const GAS_URL = "https://script.google.com/macros/s/あなたのURL/exec";
+const GAS_URL = "https://script.google.com/macros/s/AKfycbwReLt9RQ98jXaUFPFbtOt5dbpq6zgmTeMnEa4xQnFbR57G1xJDvcYmUh45tvq4VO-m/exec";
 
 // Node18 の標準 fetch
 async function getWeapons() {
