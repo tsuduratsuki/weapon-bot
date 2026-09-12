@@ -89,7 +89,7 @@ client.on("messageCreate", async message => {
 // ---------------------------
 client.on("interactionCreate", async interaction => {
 
-  // スラッシュコマンド
+  // ⭐ スラッシュコマンド
   if (interaction.isChatInputCommand()) {
     const command = client.commands.get(interaction.commandName);
     if (!command) return;
@@ -98,7 +98,10 @@ client.on("interactionCreate", async interaction => {
       await command.execute(interaction);
     } catch (error) {
       console.error(error);
-      await interaction.reply({ content: "コマンド実行中にエラーが発生しました。", ephemeral: true });
+      await interaction.reply({
+        content: "コマンド実行中にエラーが発生しました。",
+        ephemeral: true
+      });
     }
     return;
   }
