@@ -38,7 +38,7 @@ module.exports = {
     // ⭐ 抽選実行（ここで初めて deferReply）
     await interaction.deferReply();
 
-    const url = "https://script.google.com/macros/s/あなたのURL/exec";
+    const url = "https://script.google.com/macros/s/AKfycbwReLt9RQ98jXaUFPFbtOt5dbpq6zgmTeMnEa4xQnFbR57G1xJDvcYmUh45tvq4VO-m/exec";
     const res = await fetch(url);
     const weapons = await res.json();
 
