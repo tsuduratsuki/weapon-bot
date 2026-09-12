@@ -60,6 +60,14 @@ module.exports = {
       filtered = weapons.filter(w => w.sub === filter);
     } else if (sub === "special") {
       filtered = weapons.filter(w => w.special === filter);
+    } else if (sub === "normal") {
+      // normal は完全ランダムなのでそのまま
+      filtered = weapons;
+    }
+
+    // 念のため 0 件チェック
+    if (filtered.length === 0) {
+      return interaction.editReply("該当する武器がありませんでした。");
     }
 
     const index = Math.floor(Math.random() * filtered.length);
