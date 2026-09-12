@@ -1,7 +1,9 @@
-const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args));
+const { SlashCommandBuilder } = require("discord.js");
+
 module.exports = {
-  name: "solo",
-  description: "ソロ武器抽選を開始します",
+  data: new SlashCommandBuilder()
+    .setName("solo")
+    .setDescription("ソロ武器抽選を開始します"),
 
   async execute(interaction) {
     await interaction.reply("ソロ抽選を開始します…");
@@ -9,7 +11,7 @@ module.exports = {
     // GAS の武器一覧 API
     const url = "https://script.google.com/macros/s/AKfycbxxxxxxxxxxxxxxxxxxxx/exec";
 
-    // 武器一覧を取得（標準fetch）
+    // 標準 fetch（Node18）
     const res = await fetch(url);
     const weapons = await res.json();
 
