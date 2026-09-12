@@ -9,7 +9,7 @@ module.exports = {
     await interaction.reply("ソロ抽選を開始します…");
 
     // GAS の武器一覧 API
-    const url = "https://script.google.com/macros/s/AKfycbxxxxxxxxxxxxxxxxxxxx/exec";
+    const url = "https://script.google.com/macros/s/AKfycbwReLt9RQ98jXaUFPFbtOt5dbpq6zgmTeMnEa4xQnFbR57G1xJDvcYmUh45tvq4VO-m/exec";
 
     // 標準 fetch（Node18）
     const res = await fetch(url);
