@@ -24,25 +24,26 @@ module.exports = {
     ),
 
   async execute(interaction) {
-    await interaction.reply("ソロ抽選を開始します…");
-
-    // ★ あなたの GAS API URL を入れてね
-    const url = "https://script.google.com/macros/s/AKfycbwReLt9RQ98jXaUFPFbtOt5dbpq6zgmTeMnEa4xQnFbR57G1xJDvcYmUh45tvq4VO-m/exec";
-
-    const res = await fetch(url);
-    const weapons = await res.json();
-
     const mode = interaction.options.getString("mode");
     const filter = interaction.options.getString("filter");
 
-    // ⭐ プルダウンの自動生成（武器種・サブ・スペシャル一覧）
-    const types = [...new Set(weapons.map(w => w.type))];
-    const subs = [...new Set(weapons.map(w => w.sub))];
-    const specials = [...new Set(weapons.map(w => w.special))];
+    // ⭐ フィルターがまだ選ばれていない場合は返事しない
+    if (mode !== "normal" && !filter) {
+      return interaction.reply({
+        content: "フィルターを選んでください。",
+        ephemeral: true
+      });
+    }
+
+    // ⭐ 抽選実行（ここで初めて deferReply）
+    await interaction.deferReply();
+
+    const url = "https://script.google.com/macros/s/あなたのURL/exec";
+    const res = await fetch(url);
+    const weapons = await res.json();
 
     let filtered = weapons;
 
-    // ⭐ 抽選モードごとのフィルタリング
     if (mode === "type") {
       filtered = weapons.filter(w => w.type === filter);
     } else if (mode === "sub") {
@@ -51,7 +52,6 @@ module.exports = {
       filtered = weapons.filter(w => w.special === filter);
     }
 
-    // ⭐ 抽選
     const index = Math.floor(Math.random() * filtered.length);
     const result = filtered[index];
 
