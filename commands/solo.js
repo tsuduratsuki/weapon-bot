@@ -1,4 +1,5 @@
 const { SlashCommandBuilder } = require("discord.js");
+const { getWeaponsCached } = require("../utils/getWeaponsCached");
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -47,11 +48,11 @@ module.exports = {
     const sub = interaction.options.getSubcommand();
     const filter = interaction.options.getString("filter");
 
+    // ⭐ まず deferReply（高速化の基本）
     await interaction.deferReply();
 
-    const url = "https://script.google.com/macros/s/AKfycbwu-ojVqeVHhjJ0Uq1UYQ0RtnZuCGWa8UmBW6j2g1AxWJn-M69t7aDR5DewFOnpm-xI/exec";
-    const res = await fetch(url);
-    const weapons = await res.json();
+    // ⭐ GAS に直接アクセスしない。キャッシュを使う。
+    const weapons = await getWeaponsCached();
 
     let filtered = weapons;
 
