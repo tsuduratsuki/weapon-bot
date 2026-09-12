@@ -48,10 +48,8 @@ module.exports = {
     const sub = interaction.options.getSubcommand();
     const filter = interaction.options.getString("filter");
 
-    // ⭐ まず deferReply（高速化の基本）
     await interaction.deferReply();
 
-    // ⭐ GAS に直接アクセスしない。キャッシュを使う。
     const weapons = await getWeaponsCached();
 
     let filtered = weapons;
