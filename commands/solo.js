@@ -100,6 +100,7 @@ module.exports = {
     await interaction.deferReply();
 
     const weapons = await getWeaponsCached();
+  console.log(weapons[0]);
 
     // ★ weapons が空なら止まるので必ずチェック
     if (!weapons || weapons.length === 0) {
