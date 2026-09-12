@@ -1,3 +1,4 @@
+const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args));
 module.exports = {
   name: "solo",
   description: "ソロ武器抽選を開始します",
