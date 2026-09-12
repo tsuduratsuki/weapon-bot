@@ -11,12 +11,9 @@
   "author": "",
   "license": "ISC",
   "type": "commonjs",
-  "engines": {
-    "node": "18.x"
-  },
   "dependencies": {
-    "discord.js": "^14.7.0",
-    "node-fetch": "^2.6.7",
-    "dotenv": "^16.4.5"
+    "discord.js": "^14.27.0",
+    "dotenv": "^16.4.5",
+    "node-fetch": "^2.6.7"
   }
 }

@@ -14,9 +14,10 @@ const {
 const { getWeaponsCached } = require("./utils/getWeaponsCached");
 const { pickWithLimit } = require("./utils/pickWithLimit");
 
-// 設定オブジェクト
-globalThis.team4Settings = { mode: "", charger: "off", range: "off" };
-globalThis.team8Settings = { mode: "", charger: "off", range: "off" };
+// 設定
+globalThis.soloSettings  = { mode: "", filter: "" };
+globalThis.team4Settings = { mode: "", filter: "", charger: "off", range: "off" };
+globalThis.team8Settings = { mode: "", filter: "", charger: "off", range: "off" };
 
 const client = new Client({
   intents: [
@@ -41,8 +42,13 @@ for (const file of commandFiles) {
   client.commands.set(command.data.name, command);
 }
 
+client.once(Events.ClientReady, async () => {
+  console.log("Bot Ready!");
+  globalThis.cachedWeapons = await getWeaponsCached(); // 起動時に一度だけ読み込む
+});
+
 // ---------------------------
-// InteractionCreate（1つに統合）
+// InteractionCreate
 // ---------------------------
 client.on(Events.InteractionCreate, async interaction => {
 
@@ -53,11 +59,8 @@ client.on(Events.InteractionCreate, async interaction => {
     const command = client.commands.get(interaction.commandName);
     if (!command) return;
 
-    try {
-      await command.execute(interaction);
-    } catch (error) {
-      console.error(error);
-    }
+    await interaction.deferReply();
+    await command.execute(interaction);
     return;
   }
 
@@ -66,157 +69,287 @@ client.on(Events.InteractionCreate, async interaction => {
   // ---------------------------
   if (interaction.isStringSelectMenu()) {
 
-    // 武器一覧キャッシュ
-    if (
-      interaction.customId === "team4Mode" ||
-      interaction.customId === "team8Mode"
-    ) {
+    // update() が二重に走っても落ちないようにする
+    const safeUpdate = async (data) => {
       try {
-        globalThis.cachedWeapons = await getWeaponsCached();
+        await interaction.update(data);
       } catch (e) {
-        console.error("武器一覧取得エラー:", e);
-        return interaction.reply({
-          content: "武器一覧の取得に失敗しました。",
-          ephemeral: true
+        console.log("update error:", e.message);
+      }
+    };
+
+    const weapons = globalThis.cachedWeapons;
+
+    // ============================================================
+    // SOLO：モード選択
+    // ============================================================
+    if (interaction.customId === "soloMode") {
+      const mode = interaction.values[0];
+      soloSettings.mode = mode;
+
+      if (mode === "normal") {
+        const result = weapons[Math.floor(Math.random() * weapons.length)];
+        return safeUpdate({
+          content: `🎯 ソロ抽選結果：**${result.name}**`,
+          components: []
         });
       }
+
+      const key = mode;
+      const list = [...new Set(weapons.map(w => w[key]))];
+
+      const menu = new StringSelectMenuBuilder()
+        .setCustomId(`solo_${key}`)
+        .setPlaceholder(`${key} を選んでください`)
+        .addOptions(list.map(v => ({ label: v, value: v })));
+
+      return safeUpdate({
+        content: `${key} を選んでください：`,
+        components: [new ActionRowBuilder().addComponents(menu)]
+      });
     }
 
     // ============================================================
-    // 4人用
+    // SOLO：フィルタ選択
     // ============================================================
+    else if (
+      interaction.customId === "solo_type" ||
+      interaction.customId === "solo_sub" ||
+      interaction.customId === "solo_special"
+    ) {
+      const filter = interaction.values[0];
 
-    if (interaction.customId === "team4Mode") {
-      const weapons = globalThis.cachedWeapons;
+      let pool = [...weapons];
+
+      if (interaction.customId === "solo_type") {
+        pool = pool.filter(w => w.type === filter);
+      } else if (interaction.customId === "solo_sub") {
+        pool = pool.filter(w => w.sub === filter);
+      } else if (interaction.customId === "solo_special") {
+        pool = pool.filter(w => w.special === filter);
+      }
+
+      const result = pool[Math.floor(Math.random() * pool.length)];
+
+      return safeUpdate({
+        content: `🎯 ソロ抽選結果：**${result.name}**`,
+        components: []
+      });
+    }
+
+    // ============================================================
+    // TEAM4：モード選択
+    // ============================================================
+    else if (interaction.customId === "team4Mode") {
       const mode = interaction.values[0];
       team4Settings.mode = mode;
 
       if (mode === "normal") {
         const chargerMenu = new StringSelectMenuBuilder()
-          .setCustomId("team4ChargerLimit")
+          .setCustomId("team4Charger")
           .setPlaceholder("チャージャー制限")
           .addOptions([
             { label: "OFF（無制限）", value: "off" },
             { label: "ON（1つまで）", value: "on" }
           ]);
 
-        const rangeMenu = new StringSelectMenuBuilder()
-          .setCustomId("team4RangeLimit")
-          .setPlaceholder("長射程制限")
-          .addOptions([
-            { label: "OFF（無制限）", value: "off" },
-            { label: "ON（2つまで）", value: "on" }
-          ]);
-
-        return interaction.reply({
-          content: "制限を選んでください：",
-          components: [
-            new ActionRowBuilder().addComponents(chargerMenu),
-            new ActionRowBuilder().addComponents(rangeMenu)
-          ],
-          ephemeral: true
+        return safeUpdate({
+          content: "チャージャー制限を選んでください：",
+          components: [new ActionRowBuilder().addComponents(chargerMenu)]
         });
       }
 
-      let list = [];
-      let nextId = "";
-
-      if (mode === "type") {
-        list = [...new Set(weapons.map(w => w.type))];
-        nextId = "team4Type";
-      } else if (mode === "sub") {
-        list = [...new Set(weapons.map(w => w.sub))];
-        nextId = "team4Sub";
-      } else if (mode === "special") {
-        list = [...new Set(weapons.map(w => w.special))];
-        nextId = "team4Special";
-      }
+      const key = mode;
+      const list = [...new Set(weapons.map(w => w[key]))];
 
       const menu = new StringSelectMenuBuilder()
-        .setCustomId(nextId)
-        .setPlaceholder("条件を選んでください")
+        .setCustomId(`team4_${key}`)
+        .setPlaceholder(`${key} を選んでください`)
         .addOptions(list.map(v => ({ label: v, value: v })));
 
-      return interaction.reply({
-        content: "条件を選んでください：",
-        components: [new ActionRowBuilder().addComponents(menu)],
-        ephemeral: true
+      return safeUpdate({
+        content: `${key} を選んでください：`,
+        components: [new ActionRowBuilder().addComponents(menu)]
       });
     }
 
-    if (interaction.customId === "team4ChargerLimit") {
+    // ============================================================
+    // TEAM4：フィルタ選択
+    // ============================================================
+    else if (
+      interaction.customId === "team4_type" ||
+      interaction.customId === "team4_sub" ||
+      interaction.customId === "team4_special"
+    ) {
+      const filter = interaction.values[0];
+
+      let pool = [...weapons];
+
+      if (interaction.customId === "team4_type") {
+        pool = pool.filter(w => w.type === filter);
+      } else if (interaction.customId === "team4_sub") {
+        pool = pool.filter(w => w.sub === filter);
+      } else if (interaction.customId === "team4_special") {
+        pool = pool.filter(w => w.special === filter);
+      }
+
+      const alpha = pickWithLimit(pool, 4, "off", "off");
+
+      let text = `【4人用抽選結果】\n\n`;
+      alpha.forEach((w, i) => text += `${i + 1}人目：**${w.name}**\n`);
+
+      return safeUpdate({
+        content: text,
+        components: []
+      });
+    }
+
+    // ============================================================
+    // TEAM4：normal → チャージャー → 長射程
+    // ============================================================
+    else if (interaction.customId === "team4Charger") {
       team4Settings.charger = interaction.values[0];
-      return interaction.reply({
-        content: `チャージャー制限：${team4Settings.charger}`,
-        ephemeral: true
+
+      const rangeMenu = new StringSelectMenuBuilder()
+        .setCustomId("team4Range")
+        .setPlaceholder("長射程制限")
+        .addOptions([
+          { label: "OFF（無制限）", value: "off" },
+          { label: "ON（2つまで）", value: "on" }
+        ]);
+
+      return safeUpdate({
+        content: `チャージャー制限：${team4Settings.charger}\n次に長射程制限を選んでください：`,
+        components: [new ActionRowBuilder().addComponents(rangeMenu)]
       });
     }
 
-    if (interaction.customId === "team4RangeLimit") {
+    else if (interaction.customId === "team4Range") {
       team4Settings.range = interaction.values[0];
 
-      await interaction.deferReply({ ephemeral: true });
+      const alpha = pickWithLimit(weapons, 4, team4Settings.charger, team4Settings.range);
 
-      const weapons = globalThis.cachedWeapons;
+      let text = `【4人用抽選結果】\n\n`;
+      alpha.forEach((w, i) => text += `${i + 1}人目：**${w.name}**\n`);
 
-      const team = pickWithLimit(
-        weapons,
-        4,
-        team4Settings.charger,
-        team4Settings.range
-      );
-
-      let text = "【通常抽選 4人（制限適用）】\n";
-      team.forEach((w, i) => text += `${i + 1}人目：**${w.name}**\n`);
-
-      return interaction.editReply(text);
+      return safeUpdate({
+        content: text,
+        components: []
+      });
     }
 
-    if (interaction.customId === "team4Type") {
-      await interaction.deferReply({ ephemeral: true });
+    // ============================================================
+    // TEAM8：モード選択
+    // ============================================================
+    else if (interaction.customId === "team8Mode") {
+      const mode = interaction.values[0];
+      team8Settings.mode = mode;
 
-      const weapons = globalThis.cachedWeapons;
-      const selected = interaction.values[0];
-      const filtered = weapons.filter(w => w.type === selected);
+      if (mode === "normal") {
+        const chargerMenu = new StringSelectMenuBuilder()
+          .setCustomId("team8Charger")
+          .setPlaceholder("チャージャー制限")
+          .addOptions([
+            { label: "OFF（無制限）", value: "off" },
+            { label: "ON（1つまで）", value: "on" }
+          ]);
 
-      const team = pickWithLimit(filtered, 4, "off", "off");
+        return safeUpdate({
+          content: "チャージャー制限を選んでください：",
+          components: [new ActionRowBuilder().addComponents(chargerMenu)]
+        });
+      }
 
-      let text = `【武器種「${selected}」4人】\n`;
-      team.forEach((w, i) => text += `${i + 1}人目：**${w.name}**\n`);
+      const key = mode;
+      const list = [...new Set(weapons.map(w => w[key]))];
 
-      return interaction.editReply(text);
+      const menu = new StringSelectMenuBuilder()
+        .setCustomId(`team8_${key}`)
+        .setPlaceholder(`${key} を選んでください`)
+        .addOptions(list.map(v => ({ label: v, value: v })));
+
+      return safeUpdate({
+        content: `${key} を選んでください：`,
+        components: [new ActionRowBuilder().addComponents(menu)]
+      });
     }
 
-    if (interaction.customId === "team4Sub") {
-      await interaction.deferReply({ ephemeral: true });
+    // ============================================================
+    // TEAM8：フィルタ選択
+    // ============================================================
+    else if (
+      interaction.customId === "team8_type" ||
+      interaction.customId === "team8_sub" ||
+      interaction.customId === "team8_special"
+    ) {
+      const filter = interaction.values[0];
 
-      const weapons = globalThis.cachedWeapons;
-      const selected = interaction.values[0];
-      const filtered = weapons.filter(w => w.sub === selected);
+      let pool = [...weapons];
 
-      const team = pickWithLimit(filtered, 4, "off", "off");
+      if (interaction.customId === "team8_type") {
+        pool = pool.filter(w => w.type === filter);
+      } else if (interaction.customId === "team8_sub") {
+        pool = pool.filter(w => w.sub === filter);
+      } else if (interaction.customId === "team8_special") {
+        pool = pool.filter(w => w.special === filter);
+      }
 
-      let text = `【サブ「${selected}」4人】\n`;
-      team.forEach((w, i) => text += `${i + 1}人目：**${w.name}**\n`);
+      const alpha = pickWithLimit(pool, 4, "off", "off");
+      const bravo = pickWithLimit(pool, 4, "off", "off");
 
-      return interaction.editReply(text);
+      let text = `【8人用抽選結果】\n\n`;
+
+      text += `▼ アルファチーム\n`;
+      alpha.forEach((w, i) => text += `${i + 1}人目：**${w.name}**\n`);
+
+      text += `\n▼ ブラボーチーム\n`;
+      bravo.forEach((w, i) => text += `${i + 1}人目：**${w.name}**\n`);
+
+      return safeUpdate({
+        content: text,
+        components: []
+      });
     }
 
-    if (interaction.customId === "team4Special") {
-      await interaction.deferReply({ ephemeral: true });
+    // ============================================================
+    // TEAM8：normal → チャージャー → 長射程
+    // ============================================================
+    else if (interaction.customId === "team8Charger") {
+      team8Settings.charger = interaction.values[0];
 
-      const weapons = globalThis.cachedWeapons;
-      const selected = interaction.values[0];
-      const filtered = weapons.filter(w => w.special === selected);
+      const rangeMenu = new StringSelectMenuBuilder()
+        .setCustomId("team8Range")
+        .setPlaceholder("長射程制限")
+        .addOptions([
+          { label: "OFF（無制限）", value: "off" },
+          { label: "ON（2つまで）", value: "on" }
+        ]);
 
-      const team = pickWithLimit(filtered, 4, "off", "off");
-
-      let text = `【スペシャル「${selected}」4人】\n`;
-      team.forEach((w, i) => text += `${i + 1}人目：**${w.name}**\n`);
-
-      return interaction.editReply(text);
+      return safeUpdate({
+        content: `チャージャー制限：${team8Settings.charger}\n次に長射程制限を選んでください：`,
+        components: [new ActionRowBuilder().addComponents(rangeMenu)]
+      });
     }
 
+    else if (interaction.customId === "team8Range") {
+      team8Settings.range = interaction.values[0];
+
+      const alpha = pickWithLimit(weapons, 4, team8Settings.charger, team8Settings.range);
+      const bravo = pickWithLimit(weapons, 4, team8Settings.charger, team8Settings.range);
+
+      let text = `【8人用抽選結果】\n\n`;
+
+      text += `▼ アルファチーム\n`;
+      alpha.forEach((w, i) => text += `${i + 1}人目：**${w.name}**\n`);
+
+      text += `\n▼ ブラボーチーム\n`;
+      bravo.forEach((w, i) => text += `${i + 1}人目：**${w.name}**\n`);
+
+      return safeUpdate({
+        content: text,
+        components: []
+      });
+    }
   }
 });
 
