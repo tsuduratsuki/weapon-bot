@@ -11,8 +11,8 @@ module.exports = {
 
   async execute(interaction) {
 
-    // ★ まず必ず deferReply（ephemeral なし）
-    await interaction.deferReply();
+    // ★ deferReply を使わない（壊れた interaction の原因）
+    // ★ reply を1回だけ送る（Discordが最も壊れない方法）
 
     const modeMenu = new StringSelectMenuBuilder()
       .setCustomId("team4Mode_v2")
@@ -26,8 +26,7 @@ module.exports = {
 
     const row = new ActionRowBuilder().addComponents(modeMenu);
 
-    // ★ editReply で確実に「reply」を送る
-    return interaction.editReply({
+    return interaction.reply({
       content: "抽選方法を選んでください：",
       components: [row]
     });
