@@ -193,36 +193,37 @@ client.on(Events.InteractionCreate, async interaction => {
     // TEAM4：フィルタ選択
     // ============================================================
     else if (
-      interaction.customId === "team4_type" ||
-      interaction.customId === "team4_sub" ||
-      interaction.customId === "team4_special"
-    ) {
-      if (team4Settings.mode === "normal") {
-        return;
-      }
+  interaction.customId === "team4_type" ||
+  interaction.customId === "team4_sub" ||
+  interaction.customId === "team4_special"
+) {
+  if (team4Settings.mode === "normal") {
+    // ★ ここを削除する
+    // return;
+  }
 
-      const filter = interaction.values[0];
+  const filter = interaction.values[0];
 
-      let pool = [...weapons];
+  let pool = [...weapons];
 
-      if (interaction.customId === "team4_type") {
-        pool = pool.filter(w => w.type === filter);
-      } else if (interaction.customId === "team4_sub") {
-        pool = pool.filter(w => w.sub === filter);
-      } else if (interaction.customId === "team4_special") {
-        pool = pool.filter(w => w.special === filter);
-      }
+  if (interaction.customId === "team4_type") {
+    pool = pool.filter(w => w.type === filter);
+  } else if (interaction.customId === "team4_sub") {
+    pool = pool.filter(w => w.sub === filter);
+  } else if (interaction.customId === "team4_special") {
+    pool = pool.filter(w => w.special === filter);
+  }
 
-      const alpha = pickWithLimit(pool, 4, "off", "off");
+  const alpha = pickWithLimit(pool, 4, "off", "off");
 
-      let text = `【4人用抽選結果】\n\n`;
-      alpha.forEach((w, i) => text += `${i + 1}人目：**${w.name}**\n`);
+  let text = `【4人用抽選結果】\n\n`;
+  alpha.forEach((w, i) => text += `${i + 1}人目：**${w.name}**\n`);
 
-      return safeUpdate({
-        content: text,
-        components: []
-      });
-    }
+  return safeUpdate({
+    content: text,
+    components: []
+  });
+}
 
     // ============================================================
     // TEAM8：モード選択
