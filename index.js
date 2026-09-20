@@ -301,27 +301,30 @@ client.on(Events.InteractionCreate, async interaction => {
     }
 
     // ============================================================
-    // TEAM8：normal → ルール選択 → 抽選
-    // ============================================================
-    else if (interaction.customId === "team8Rule") {
-      const rule = interaction.values[0];
+// TEAM8：normal → ルール選択 → 抽選（ルール適用・除外なし）
+// ============================================================
+else if (interaction.customId === "team8Rule") {
+  const rule = interaction.values[0];
 
-      const alpha = pickWithLimit(weapons, 4, "off", "off");
-      const bravo = pickWithLimit(weapons, 4, "off", "off");
+  // アルファチーム（ルール適用）
+  const alpha = pickByRule(weapons, 4, rule);
 
-      let text = `【8人用抽選結果（${rule}）】\n\n`;
+  // ブラボーチーム（ルール適用・除外なし）
+  const bravo = pickByRule(weapons, 4, rule);
 
-      text += `▼ アルファチーム\n`;
-      alpha.forEach((w, i) => text += `${i + 1}人目：**${w.name}**\n`);
+  let text = `【8人用抽選結果（${rule}）】\n\n`;
 
-      text += `\n▼ ブラボーチーム\n`;
-      bravo.forEach((w, i) => text += `${i + 1}人目：**${w.name}**\n`);
+  text += `▼ アルファチーム\n`;
+  alpha.forEach((w, i) => text += `${i + 1}人目：**${w.name}**\n`);
 
-      return safeUpdate({
-        content: text,
-        components: []
-      });
-    }
+  text += `\n▼ ブラボーチーム\n`;
+  bravo.forEach((w, i) => text += `${i + 1}人目：**${w.name}**\n`);
+
+  return safeUpdate({
+    content: text,
+    components: []
+  });
+}
 
   } // ← ★ interaction.isStringSelectMenu() の閉じ
 
