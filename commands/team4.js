@@ -23,11 +23,10 @@ module.exports = {
 
     const row = new ActionRowBuilder().addComponents(modeMenu);
 
-    await interaction.deferReply();
-    return interaction.editReply({
-  content: "抽選方法を選んでください：",
-  components: [row]
-});
+    return interaction.reply({
+      content: "抽選方法を選んでください：",
+      components: [row]
+    });
   }
-};   
+};
 
