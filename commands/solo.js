@@ -23,7 +23,7 @@ module.exports = {
 
     const row = new ActionRowBuilder().addComponents(modeMenu);
 
-    return interaction.editReply({
+    return interaction.reply({
       content: "抽選方法を選んでください：",
       components: [row]
     });

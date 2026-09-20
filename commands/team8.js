@@ -7,7 +7,7 @@ const {
 module.exports = {
   data: new SlashCommandBuilder()
     .setName("team8")
-    .setDescription("8人用武器抽選"),
+    .setDescription("8人用武器抽選（プラベ）"),
 
   async execute(interaction) {
 
@@ -15,7 +15,7 @@ module.exports = {
       .setCustomId("team8Mode")
       .setPlaceholder("抽選方法を選んでください")
       .addOptions([
-        { label: "通常抽選（制限あり）", value: "normal" },
+        { label: "通常抽選（ルール選択）", value: "normal" },
         { label: "武器種限定", value: "type" },
         { label: "サブ限定", value: "sub" },
         { label: "スペシャル限定", value: "special" }
@@ -23,6 +23,7 @@ module.exports = {
 
     const row = new ActionRowBuilder().addComponents(modeMenu);
 
+    await interaction.deferReply();
     return interaction.editReply({
       content: "抽選方法を選んでください：",
       components: [row]
