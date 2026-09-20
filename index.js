@@ -146,7 +146,7 @@ client.on(Events.InteractionCreate, async interaction => {
 
       if (mode === "normal") {
         const ruleMenu = new StringSelectMenuBuilder()
-          .setCustomId("team4Rule")
+          .setCustomId("team4Rule_v2")
           .setPlaceholder("ルールを選んでください")
           .addOptions([
             { label: "ガチエリア", value: "area" },
@@ -178,7 +178,7 @@ client.on(Events.InteractionCreate, async interaction => {
     // ============================================================
     // TEAM4：normal → ルール選択
     // ============================================================
-    else if (interaction.customId === "team4Rule") {
+    else if (interaction.customId === "team4Rule_v2") {
       const rule = interaction.values[0];
 
       const alpha = pickByRule(weapons, 4, rule);
